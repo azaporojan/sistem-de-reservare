@@ -17,20 +17,20 @@ services:
       timeout: 5s
       retries: 5
 
-  app:
-    build: .
-    container_name: reservare-app
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      SPRING_PROFILES_ACTIVE: local
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/reservare_db
-      SPRING_DATASOURCE_USERNAME: reservare
-      SPRING_DATASOURCE_PASSWORD: reservare
-      JWT_SECRET: local-dev-secret-replace-in-prod-must-be-long-enough
-    ports:
-      - "8080:8080"
+#  app:
+#    build: .
+#    container_name: reservare-app
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#    environment:
+#      SPRING_PROFILES_ACTIVE: local
+#      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/reservare_db
+#      SPRING_DATASOURCE_USERNAME: reservare
+#      SPRING_DATASOURCE_PASSWORD: reservare
+#      JWT_SECRET: local-dev-secret-replace-in-prod-must-be-long-enough
+#    ports:
+#      - "8080:8080"
 
 volumes:
   postgres_data:

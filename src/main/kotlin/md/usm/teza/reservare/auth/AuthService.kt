@@ -44,7 +44,7 @@ class AuthService(
         val user = userRepo.save(
             User(
                 email = req.email,
-                password = passwordEncoder.encode(req.password),
+                password = passwordEncoder.encode(req.password)!!,
                 fullName = req.fullName,
             )
         )

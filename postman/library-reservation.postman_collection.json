@@ -1,0 +1,883 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "Library Study Room Reservation API",
+    "description": "Complete API collection for the Library Study Room Reservation System.\n\n**Quick start:**\n1. Import both files (collection + environment)\n2. Select the `Library Reservation - Local` environment\n3. Run **Auth / Login as Admin** — the token is saved automatically\n4. All other requests use `{{accessToken}}` from that point on",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Public endpoints — no token required",
+      "item": [
+        {
+          "name": "Register (Student)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', body.refreshToken);",
+                  "    pm.test('Registered and received tokens', () => {",
+                  "        pm.expect(body.accessToken).to.be.a('string').and.not.empty;",
+                  "        pm.expect(body.refreshToken).to.be.a('string').and.not.empty;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"student@library.local\",\n  \"password\": \"Student1234!\",\n  \"fullName\": \"Alice Student\",\n  \"role\": \"STUDENT\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Register (Teacher)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', body.refreshToken);",
+                  "    pm.test('Registered and received tokens', () => {",
+                  "        pm.expect(body.accessToken).to.be.a('string').and.not.empty;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"teacher@library.local\",\n  \"password\": \"Teacher1234!\",\n  \"fullName\": \"Bob Teacher\",\n  \"role\": \"TEACHER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login as Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', body.refreshToken);",
+                  "    pm.test('Login successful — tokens saved', () => {",
+                  "        pm.expect(body.accessToken).to.be.a('string').and.not.empty;",
+                  "        pm.expect(body.refreshToken).to.be.a('string').and.not.empty;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@library.local\",\n  \"password\": \"Admin1234!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login as Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', body.refreshToken);",
+                  "    pm.test('Login successful', () => {",
+                  "        pm.expect(body.accessToken).to.be.a('string').and.not.empty;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"student@library.local\",\n  \"password\": \"Student1234!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login as Teacher",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', body.refreshToken);",
+                  "    pm.test('Login successful', () => {",
+                  "        pm.expect(body.accessToken).to.be.a('string').and.not.empty;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"teacher@library.local\",\n  \"password\": \"Teacher1234!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', body.refreshToken);",
+                  "    pm.test('Token refreshed', () => {",
+                  "        pm.expect(body.accessToken).to.be.a('string').and.not.empty;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "refresh"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "description": "Requires authentication. Admin operations require USER_READ / USER_MANAGE (or ALL).",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('myUserId', body.id);",
+                  "    pm.test('Profile returned', () => {",
+                  "        pm.expect(body.id).to.be.a('string');",
+                  "        pm.expect(body.email).to.be.a('string');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "me"]
+            }
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Alice Student (Updated)\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "me"]
+            }
+          }
+        },
+        {
+          "name": "List All Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const users = pm.response.json();",
+                  "    if (users.length > 0) {",
+                  "        pm.collectionVariables.set('targetUserId', users[users.length - 1].id);",
+                  "    }",
+                  "    pm.test('Users list returned', () => {",
+                  "        pm.expect(users).to.be.an('array');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{targetUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{targetUserId}}"]
+            }
+          }
+        },
+        {
+          "name": "Create User (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('targetUserId', body.id);",
+                  "    pm.test('User created', () => {",
+                  "        pm.expect(body.id).to.be.a('string');",
+                  "        pm.expect(body.email).to.equal('newteacher@library.local');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newteacher@library.local\",\n  \"password\": \"Teacher1234!\",\n  \"fullName\": \"Carol Teacher\",\n  \"role\": \"TEACHER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          }
+        },
+        {
+          "name": "Update User (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Carol Teacher (Senior)\",\n  \"enabled\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{targetUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{targetUserId}}"]
+            }
+          }
+        },
+        {
+          "name": "Grant Permission to User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permission\": \"RESERVATION_READ_ALL\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{targetUserId}}/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{targetUserId}}", "permissions"]
+            }
+          }
+        },
+        {
+          "name": "Revoke Permission from User",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permission\": \"RESERVATION_READ_ALL\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{targetUserId}}/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{targetUserId}}", "permissions"]
+            }
+          }
+        },
+        {
+          "name": "Delete User (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{targetUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{targetUserId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rooms",
+      "description": "READ requires ROOM_READ or ALL. Write operations require ROOM_WRITE or ALL.",
+      "item": [
+        {
+          "name": "List All Rooms",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const rooms = pm.response.json();",
+                  "    if (rooms.length > 0) {",
+                  "        pm.collectionVariables.set('roomId', rooms[0].id);",
+                  "    }",
+                  "    pm.test('Rooms list returned', () => {",
+                  "        pm.expect(rooms).to.be.an('array');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rooms"]
+            }
+          }
+        },
+        {
+          "name": "Get Room by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms/{{roomId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rooms", "{{roomId}}"]
+            }
+          }
+        },
+        {
+          "name": "Check Room Availability",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"start\": \"2026-06-10T09:00:00\",\n  \"end\": \"2026-06-10T11:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms/{{roomId}}/availability",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rooms", "{{roomId}}", "availability"]
+            }
+          }
+        },
+        {
+          "name": "Create Room",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('roomId', body.id);",
+                  "    pm.test('Room created', () => {",
+                  "        pm.expect(body.id).to.be.a('number');",
+                  "        pm.expect(body.name).to.equal('Reading Room A');",
+                  "    });",
+                  "    console.log('Created room ID:', body.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Reading Room A\",\n  \"location\": \"Building 1, Floor 2\",\n  \"capacity\": 20,\n  \"description\": \"Quiet study room with natural lighting\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rooms"]
+            }
+          }
+        },
+        {
+          "name": "Create Room (Large — admin/teacher limit test)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('largeRoomId', body.id);",
+                  "    pm.test('Large room created', () => pm.expect(body.capacity).to.equal(250));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Lecture Hall B\",\n  \"location\": \"Building 2, Ground Floor\",\n  \"capacity\": 250,\n  \"description\": \"Large lecture hall — only bookable by admin\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rooms"]
+            }
+          }
+        },
+        {
+          "name": "Update Room",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Quiet study room — projector available\",\n  \"capacity\": 25\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms/{{roomId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rooms", "{{roomId}}"]
+            }
+          }
+        },
+        {
+          "name": "Deactivate Room",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"active\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms/{{roomId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rooms", "{{roomId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Room",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/rooms/{{roomId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "rooms", "{{roomId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reservations",
+      "description": "Booking, review, and cancellation flows.",
+      "item": [
+        {
+          "name": "List All Reservations",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const items = pm.response.json();",
+                  "    if (items.length > 0) {",
+                  "        pm.collectionVariables.set('reservationId', items[0].id);",
+                  "    }",
+                  "    pm.test('Reservations list returned', () => {",
+                  "        pm.expect(items).to.be.an('array');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reservations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservations"]
+            }
+          }
+        },
+        {
+          "name": "List My Reservations",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const items = pm.response.json();",
+                  "    if (items.length > 0) {",
+                  "        pm.collectionVariables.set('reservationId', items[0].id);",
+                  "    }",
+                  "    pm.test('My reservations returned', () => {",
+                  "        pm.expect(items).to.be.an('array');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reservations/my",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservations", "my"]
+            }
+          }
+        },
+        {
+          "name": "Get Reservation by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reservations/{{reservationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservations", "{{reservationId}}"]
+            }
+          }
+        },
+        {
+          "name": "Book Room (Admin — auto-confirmed)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('reservationId', body.id);",
+                  "    pm.test('Room booked', () => {",
+                  "        pm.expect(body.id).to.be.a('string');",
+                  "        pm.expect(body.type).to.equal('ROOM');",
+                  "        pm.expect(body.status).to.equal('CONFIRMED');",
+                  "    });",
+                  "    console.log('Reservation ID:', body.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roomId\": {{roomId}},\n  \"startDateTime\": \"2026-06-10T09:00:00\",\n  \"endDateTime\": \"2026-06-10T11:00:00\",\n  \"notes\": \"Admin booking — team workshop\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reservations/room",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservations", "room"]
+            }
+          }
+        },
+        {
+          "name": "Book Room (Teacher — PENDING)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('pendingReservationId', body.id);",
+                  "    pm.test('Room booking created as PENDING', () => {",
+                  "        pm.expect(body.status).to.equal('PENDING');",
+                  "        pm.expect(body.type).to.equal('ROOM');",
+                  "    });",
+                  "    console.log('Pending reservation ID:', body.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roomId\": {{roomId}},\n  \"startDateTime\": \"2026-06-11T14:00:00\",\n  \"endDateTime\": \"2026-06-11T16:00:00\",\n  \"notes\": \"Weekly lecture prep\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reservations/room",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservations", "room"]
+            }
+          }
+        },
+        {
+          "name": "Book Seat (Student — PENDING)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('pendingReservationId', body.id);",
+                  "    pm.test('Seat booking created as PENDING', () => {",
+                  "        pm.expect(body.status).to.equal('PENDING');",
+                  "        pm.expect(body.type).to.equal('SEAT');",
+                  "        pm.expect(body.seatsRequested).to.equal(1);",
+                  "    });",
+                  "    console.log('Seat reservation ID:', body.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roomId\": {{roomId}},\n  \"startDateTime\": \"2026-06-12T10:00:00\",\n  \"endDateTime\": \"2026-06-12T12:00:00\",\n  \"notes\": \"Exam preparation\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reservations/seat",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservations", "seat"]
+            }
+          }
+        },
+        {
+          "name": "Confirm Reservation (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    pm.test('Reservation confirmed', () => {",
+                  "        pm.expect(body.status).to.equal('CONFIRMED');",
+                  "        pm.expect(body.reviewedBy).to.not.be.null;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Approved — room is available\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reservations/{{pendingReservationId}}/confirm",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservations", "{{pendingReservationId}}", "confirm"]
+            }
+          }
+        },
+        {
+          "name": "Decline Reservation (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    pm.test('Reservation declined', () => {",
+                  "        pm.expect(body.status).to.equal('DECLINED');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Declined — conflicting event scheduled\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reservations/{{pendingReservationId}}/decline",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservations", "{{pendingReservationId}}", "decline"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Reservation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const body = pm.response.json();",
+                  "    pm.test('Reservation cancelled', () => {",
+                  "        pm.expect(body.status).to.equal('CANCELLED');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/api/reservations/{{reservationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reservations", "{{reservationId}}"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl",             "value": "http://localhost:8080" },
+    { "key": "accessToken",         "value": "" },
+    { "key": "refreshToken",        "value": "" },
+    { "key": "myUserId",            "value": "" },
+    { "key": "targetUserId",        "value": "" },
+    { "key": "roomId",              "value": "1" },
+    { "key": "largeRoomId",         "value": "" },
+    { "key": "reservationId",       "value": "" },
+    { "key": "pendingReservationId","value": "" }
+  ]
+}

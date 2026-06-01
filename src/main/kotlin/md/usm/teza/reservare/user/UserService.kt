@@ -32,7 +32,7 @@ class UserService(
     fun updateMe(userId: UUID, req: UpdateProfileRequest): UserResponse {
         val user = userRepo.findById(userId).orElseThrow { NotFoundException("User not found") }
         req.fullName?.let { user.fullName = it }
-        req.password?.let { user.password = passwordEncoder.encode(it) }
+        req.password?.let { user.password = passwordEncoder.encode(it)!! }
         return userRepo.save(user).toResponse()
     }
 
@@ -45,7 +45,7 @@ class UserService(
         val role = roleRepo.findByName(roleName) ?: throw BadRequestException("Role not found")
 
         val user = userRepo.save(
-            User(email = req.email, password = passwordEncoder.encode(req.password), fullName = req.fullName)
+            User(email = req.email, password = passwordEncoder.encode(req.password)!!, fullName = req.fullName)
         )
         userRoleRepo.save(UserRole(userId = user.id, role = role))
         return user.toResponse()
@@ -56,7 +56,7 @@ class UserService(
         val user = userRepo.findById(id).orElseThrow { NotFoundException("User not found: $id") }
 
         req.fullName?.let { user.fullName = it }
-        req.password?.let { user.password = passwordEncoder.encode(it) }
+        req.password?.let { user.password = passwordEncoder.encode(it)!! }
         req.enabled?.let { user.enabled = it }
 
         req.role?.let { roleName ->
