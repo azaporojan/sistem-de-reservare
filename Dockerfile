@@ -6,7 +6,7 @@ WORKDIR /app
 # Cache Gradle wrapper and dependencies before copying source
 COPY gradlew settings.gradle.kts build.gradle.kts ./
 COPY gradle ./gradle
-RUN ./gradlew dependencies --no-daemon --quiet
+RUN chmod +x gradlew && ./gradlew dependencies --no-daemon --quiet
 
 COPY src ./src
 RUN ./gradlew bootJar --no-daemon -x test
