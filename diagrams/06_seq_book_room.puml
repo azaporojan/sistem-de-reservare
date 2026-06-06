@@ -1,0 +1,140 @@
+@startuml Sequence_BookRoom
+!theme plain
+skinparam backgroundColor #FAFAFA
+skinparam sequenceArrowThickness 2
+skinparam sequenceParticipantBorderColor #2C6FAC
+skinparam sequenceParticipantBackgroundColor #EEF5FF
+skinparam sequenceLifeLineBorderColor #888888
+skinparam noteBorderColor #E6800A
+skinparam noteBackgroundColor #FFF5E6
+
+title UseCase: Book an Entire Room (Teacher) & Book a Seat (Student)
+
+actor       "Teacher / Student"        as User
+participant "JwtAuthFilter"            as Filter
+participant "ReservationController\n/api/reservations" as Ctrl
+participant "ReservationService"       as Svc
+participant "RoomRepository"           as RoomRepo
+participant "BookingRulesValidator"    as Validator
+participant "UserRoleRepository"       as UserRoleRepo
+participant "ReservationRepository"    as ResRepo
+
+== Book Entire Room — Teacher (POST /api/reservations/room) ==
+note over User: Teacher has ROOM_BOOK permission
+
+User -> Filter: POST /api/reservations/room\nAuthorization: Bearer <teacherToken>\n{roomId:3, startDateTime:"2026-06-10T10:00", endDateTime:"2026-06-10T12:00"}
+
+activate Filter
+Filter -> Filter: validate JWT, extract userId + permissions
+note over Filter: authorities = [ROOM_READ, ROOM_BOOK, …]
+Filter -> Ctrl: forward (auth principal = teacherId)
+deactivate Filter
+
+activate Ctrl
+note over Ctrl: @PreAuthorize("hasAuthority('ROOM_BOOK')")\n→ passes
+Ctrl -> Svc: bookRoom(teacherId, req, isAdmin=false)
+activate Svc
+
+Svc -> RoomRepo: findById(3)
+RoomRepo --> Svc: StudyRoom{id:3, capacity:50, active:true}
+
+note over Svc: room.active == true ✓
+
+Svc -> Validator: validateRoomBooking(teacherId, room, start, end)
+activate Validator
+
+Validator -> Validator: validateSlot(start, end)\n· end > start ✓\n· 30-min aligned ✓\n· duration ≤ 2 days ✓
+
+Validator -> UserRoleRepo: findByUserId(teacherId)
+UserRoleRepo --> Validator: UserRole → TEACHER
+
+note over Validator: Role == TEACHER:\n· capacity ≤ 200 ✓\n· start ≤ now+30d ✓
+
+Validator -> ResRepo: countByUserIdAndTypeAndStatusIn(teacherId, ROOM, [PENDING,CONFIRMED])
+ResRepo --> Validator: 1
+
+note over Validator: count < 2 ✓
+
+Validator -> ResRepo: findConflicting(roomId:3, start, end, [PENDING,CONFIRMED])
+ResRepo --> Validator: [] (no conflicts)
+
+Validator --> Svc: ok (no exception)
+deactivate Validator
+
+Svc -> ResRepo: save(Reservation{userId, room, type:ROOM, start, end,\nseatsRequested:50, status:PENDING, notes})
+ResRepo --> Svc: Reservation{id:UUID, status:PENDING}
+
+Svc --> Ctrl: ReservationResponse{id, status:PENDING, …}
+deactivate Svc
+
+Ctrl --> User: 201 Created\n{id, roomId:3, type:"ROOM", status:"PENDING", …}
+deactivate Ctrl
+
+note over User: Reservation is PENDING,\nwaiting for Admin to confirm
+
+== Book a Seat — Student (POST /api/reservations/seat) ==
+note over User: Student has SEAT_BOOK permission
+
+User -> Filter: POST /api/reservations/seat\nAuthorization: Bearer <studentToken>\n{roomId:3, startDateTime:"2026-06-11T14:00", endDateTime:"2026-06-11T16:00"}
+
+activate Filter
+Filter -> Filter: validate JWT
+Filter -> Ctrl: forward (auth principal = studentId)
+deactivate Filter
+
+activate Ctrl
+note over Ctrl: @PreAuthorize("hasAuthority('SEAT_BOOK')")
+Ctrl -> Svc: bookSeat(studentId, req, isAdmin=false)
+activate Svc
+
+Svc -> RoomRepo: findById(3)
+RoomRepo --> Svc: StudyRoom{active:true}
+
+Svc -> Validator: validateSeatBooking(studentId, room, start, end)
+activate Validator
+
+Validator -> Validator: validateSlot(start, end) ✓
+
+Validator -> UserRoleRepo: findByUserId(studentId)
+UserRoleRepo --> Validator: UserRole → STUDENT
+
+note over Validator: Role == STUDENT:\n· start ≤ now+14d ✓
+
+Validator -> ResRepo: countByUserIdAndStatusIn(studentId, [PENDING,CONFIRMED])
+ResRepo --> Validator: 0
+
+note over Validator: count < 1 ✓
+
+Validator -> ResRepo: findConflicting(roomId:3, start, end, [PENDING,CONFIRMED])
+ResRepo --> Validator: [] (no conflicts)
+
+Validator --> Svc: ok
+deactivate Validator
+
+Svc -> ResRepo: save(Reservation{userId, room, type:SEAT,\nseatsRequested:1, status:PENDING})
+ResRepo --> Svc: Reservation{id:UUID, status:PENDING}
+
+Svc --> Ctrl: ReservationResponse
+deactivate Svc
+
+Ctrl --> User: 201 Created\n{id, roomId:3, type:"SEAT", status:"PENDING", …}
+deactivate Ctrl
+
+== Conflict scenario ==
+
+User -> Ctrl: POST /api/reservations/room\n(same room, overlapping time slot)
+activate Ctrl
+Ctrl -> Svc: bookRoom(…)
+activate Svc
+Svc -> Validator: validateRoomBooking(…)
+activate Validator
+Validator -> ResRepo: findConflicting(roomId, start, end, [PENDING,CONFIRMED])
+ResRepo --> Validator: [Reservation{…}] (conflict found!)
+Validator --> Svc: throw ConflictException("Room is not available")
+deactivate Validator
+Svc --> Ctrl: ConflictException
+deactivate Svc
+Ctrl --> User: 409 Conflict\n{"error":"Room is not available for the requested time slot"}
+deactivate Ctrl
+
+@enduml

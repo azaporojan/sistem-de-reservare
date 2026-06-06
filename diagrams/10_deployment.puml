@@ -1,0 +1,65 @@
+@startuml Deployment_LibraryReservationSystem
+!theme plain
+skinparam backgroundColor #FAFAFA
+skinparam node {
+  BackgroundColor #EEF5FF
+  BorderColor #2C6FAC
+}
+skinparam database {
+  BackgroundColor #FFF5E6
+  BorderColor #E6800A
+}
+skinparam cloud {
+  BackgroundColor #F0FFF0
+  BorderColor #2E8B57
+}
+
+title Library Study Room Reservation System — Deployment Diagram
+
+node "Client\n(REST API consumer)" as Client {
+  artifact "HTTP Client\n(Postman / Frontend / Mobile)" as HTTPClient
+}
+
+node "Application Server\n(Spring Boot)" as AppServer {
+  artifact "sistem-de-reservare.jar" as App {
+    component "Spring Boot App\n(Port 8080)" as SpringApp
+    component "JwtAuthFilter" as Filter
+    component "CompletionScheduler" as Scheduler
+  }
+  artifact "Flyway Migrations\n(V1__init.sql)" as Flyway
+}
+
+node "Database Server" as DBServer {
+  database "PostgreSQL\n(Port 5432)" as PG {
+    component "users" as TUsers
+    component "reservations" as TReservations
+    component "study_rooms" as TRooms
+    component "refresh_tokens" as TTokens
+    component "roles / permissions" as TRoles
+  }
+}
+
+cloud "Observability" {
+  artifact "Spring Actuator\n/actuator/health" as Actuator
+  artifact "Swagger UI\n/swagger-ui.html\n/v3/api-docs/**" as Swagger
+}
+
+' Connections
+Client --> AppServer : HTTPS / HTTP\nREST API calls
+AppServer --> DBServer : JDBC / HikariCP\n(spring.datasource)
+AppServer --> Actuator : exposes
+AppServer --> Swagger : exposes
+
+note right of AppServer
+  Profiles:
+  · local  (H2 / local PG)
+  · prod   (production PG)
+end note
+
+note bottom of PG
+  Schema managed by Flyway.
+  Seed data: roles, permissions,
+  default admin user.
+end note
+
+@enduml

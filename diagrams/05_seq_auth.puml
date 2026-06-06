@@ -1,0 +1,138 @@
+@startuml Sequence_Authentication
+!theme plain
+skinparam backgroundColor #FAFAFA
+skinparam sequenceArrowThickness 2
+skinparam sequenceParticipantBorderColor #2C6FAC
+skinparam sequenceParticipantBackgroundColor #EEF5FF
+skinparam sequenceLifeLineBorderColor #888888
+skinparam noteBorderColor #E6800A
+skinparam noteBackgroundColor #FFF5E6
+
+title Authentication — Register, Login & Refresh Token
+
+actor       "Client"             as Client
+participant "AuthController\n/api/auth" as Ctrl
+participant "AuthService"        as Svc
+participant "UserRepository"     as UserRepo
+participant "RoleRepository"     as RoleRepo
+participant "UserRoleRepository" as UserRoleRepo
+participant "JwtService"         as JwtSvc
+participant "RefreshTokenRepo"   as RefreshRepo
+
+== Register (POST /api/auth/register) ==
+
+Client -> Ctrl: POST /register\n{email, password, fullName, role:"STUDENT"}
+
+activate Ctrl
+Ctrl -> Svc: register(req)
+activate Svc
+
+Svc -> UserRepo: existsByEmail(email)
+UserRepo --> Svc: false
+
+note over Svc: Validate role ≠ ADMIN
+
+Svc -> RoleRepo: findByName(STUDENT)
+RoleRepo --> Svc: Role{STUDENT}
+
+Svc -> UserRepo: save(User{email, hashedPwd, fullName})
+UserRepo --> Svc: User{id=UUID, …}
+
+Svc -> UserRoleRepo: save(UserRole{userId, roleId})
+UserRoleRepo --> Svc: ok
+
+Svc -> Svc: effectivePermissions(userId, role)\n→ [ROOM_READ, SEAT_BOOK, RESERVATION_READ_OWN, RESERVATION_CANCEL_OWN]
+
+Svc -> JwtSvc: generateToken(userId, email, fullName, role, permissions)
+JwtSvc --> Svc: accessToken (JWT, 1h)
+
+Svc -> RefreshRepo: save(RefreshToken{token=UUID, userId, expiresAt=+30d})
+RefreshRepo --> Svc: ok
+
+Svc --> Ctrl: AuthResponse{accessToken, refreshToken}
+deactivate Svc
+
+Ctrl --> Client: 201 Created\n{accessToken, refreshToken, tokenType:"Bearer"}
+deactivate Ctrl
+
+== Login (POST /api/auth/login) ==
+
+Client -> Ctrl: POST /login\n{email, password}
+
+activate Ctrl
+Ctrl -> Svc: login(req)
+activate Svc
+
+Svc -> UserRepo: findByEmail(email)
+UserRepo --> Svc: User{id, email, hashedPwd, enabled:true}
+
+note over Svc: passwordEncoder.matches(raw, hash)
+
+Svc -> UserRoleRepo: findByUserId(userId)
+UserRoleRepo --> Svc: UserRole → Role{TEACHER}
+
+Svc -> Svc: effectivePermissions(userId, role)\n→ [ROOM_READ, ROOM_BOOK, …]
+
+Svc -> JwtSvc: generateToken(…)
+JwtSvc --> Svc: accessToken
+
+Svc -> RefreshRepo: save(RefreshToken{…, expiresAt=+30d})
+RefreshRepo --> Svc: ok
+
+Svc --> Ctrl: AuthResponse
+deactivate Svc
+
+Ctrl --> Client: 200 OK\n{accessToken, refreshToken}
+deactivate Ctrl
+
+== Refresh Token (POST /api/auth/refresh) ==
+
+Client -> Ctrl: POST /refresh\n{refreshToken: "<uuid>"}
+
+activate Ctrl
+Ctrl -> Svc: refresh(req)
+activate Svc
+
+Svc -> RefreshRepo: findByToken(token)
+RefreshRepo --> Svc: RefreshToken{userId, expiresAt, revoked:false}
+
+note over Svc: check not revoked & not expired
+
+Svc -> RefreshRepo: save(token.revoked = true)
+RefreshRepo --> Svc: ok
+
+Svc -> UserRepo: findById(userId)
+UserRepo --> Svc: User
+
+Svc -> UserRoleRepo: findByUserId(userId)
+UserRoleRepo --> Svc: UserRole → Role
+
+Svc -> JwtSvc: generateToken(…)
+JwtSvc --> Svc: newAccessToken
+
+Svc -> RefreshRepo: save(new RefreshToken)
+RefreshRepo --> Svc: ok
+
+Svc --> Ctrl: AuthResponse{newAccessToken, newRefreshToken}
+deactivate Svc
+
+Ctrl --> Client: 200 OK\n{accessToken, refreshToken}
+deactivate Ctrl
+
+== JWT Validation (every protected request) ==
+
+Client -> "JwtAuthFilter": GET /api/rooms\nAuthorization: Bearer <token>
+
+activate "JwtAuthFilter"
+"JwtAuthFilter" -> JwtSvc: isTokenValid(token)
+JwtSvc --> "JwtAuthFilter": true
+
+"JwtAuthFilter" -> JwtSvc: extractUserId(token) → "uuid"
+"JwtAuthFilter" -> JwtSvc: extractPermissions(token) → ["ROOM_READ", …]
+
+note over "JwtAuthFilter": Set SecurityContext\nUsernamePasswordAuthenticationToken\n(userId, authorities)
+
+"JwtAuthFilter" -> "RoomController": forward request
+deactivate "JwtAuthFilter"
+
+@enduml

@@ -1,0 +1,198 @@
+@startuml UseCase_Student
+!theme plain
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam backgroundColor #FAFAFA
+skinparam usecase {
+  BackgroundColor #EEF5FF
+  BorderColor #2C6FAC
+  ArrowColor #2C6FAC
+}
+skinparam ArrowColor #2C6FAC
+
+title Use Case — Guest & Student
+
+actor "Student"                  as Student
+
+rectangle "Library Study Room Reservation System" {
+
+  package "Rooms" {
+    usecase "View All Rooms"         as UC_ViewRooms
+    usecase "View Room Details"      as UC_ViewRoom
+    usecase "Check Room Availability" as UC_CheckAvail
+  }
+
+  package "Reservations" {
+    usecase "Book a Seat"               as UC_BookSeat
+    usecase "View My Reservations"      as UC_ViewMy
+    usecase "View Reservation Details"  as UC_ViewRes
+    usecase "Cancel Own Reservation"    as UC_CancelOwn
+  }
+
+  package "Profile" {
+    usecase "View My Profile"    as UC_ViewMe
+    usecase "Update My Profile"  as UC_UpdateMe
+  }
+
+  usecase "Validate Booking Rules"    as UC_Validate
+  usecase "Check Time Slot Conflict"  as UC_CheckConflict
+}
+
+
+
+Student --> UC_ViewRooms
+Student --> UC_ViewRoom
+Student --> UC_CheckAvail
+Student --> UC_BookSeat
+Student --> UC_ViewMy
+Student --> UC_ViewRes
+Student --> UC_CancelOwn
+Student --> UC_ViewMe
+Student --> UC_UpdateMe
+
+UC_BookSeat ..> UC_Validate        : <<include>>
+UC_Validate  ..> UC_CheckConflict  : <<include>>
+
+@enduml
+
+' ─────────────────────────────────────────────────────────────
+
+@startuml UseCase_Teacher
+!theme plain
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam backgroundColor #FAFAFA
+skinparam usecase {
+  BackgroundColor #EEF5FF
+  BorderColor #2C6FAC
+  ArrowColor #2C6FAC
+}
+skinparam ArrowColor #2C6FAC
+
+title Use Case — Teacher
+
+actor "Teacher" as Teacher
+
+rectangle "Library Study Room Reservation System" {
+
+  package "Rooms" {
+    usecase "View All Rooms"          as UC_ViewRooms
+    usecase "View Room Details"       as UC_ViewRoom
+    usecase "Check Room Availability" as UC_CheckAvail
+  }
+
+  package "Reservations" {
+    usecase "Book Entire Room"              as UC_BookRoom
+    usecase "Book a Seat"                   as UC_BookSeat
+    usecase "View My Reservations"          as UC_ViewMy
+    usecase "View Reservation Details"      as UC_ViewRes
+    usecase "Cancel Own Reservation"        as UC_CancelOwn
+  }
+
+  package "Profile" {
+    usecase "View My Profile"    as UC_ViewMe
+    usecase "Update My Profile"  as UC_UpdateMe
+  }
+
+  usecase "Validate Booking Rules\n(capacity ≤ 200, ≤ 30d advance,\n≤ 2 active room bookings)" as UC_Validate
+  usecase "Check Time Slot Conflict"  as UC_CheckConflict
+}
+Teacher --> UC_ViewRooms
+Teacher --> UC_ViewRoom
+Teacher --> UC_CheckAvail
+Teacher --> UC_BookRoom
+Teacher --> UC_BookSeat
+Teacher --> UC_ViewMy
+Teacher --> UC_ViewRes
+Teacher --> UC_CancelOwn
+Teacher --> UC_ViewMe
+Teacher --> UC_UpdateMe
+
+UC_BookRoom ..> UC_Validate
+UC_BookSeat ..> UC_Validate
+UC_Validate  ..> UC_CheckConflict
+
+@enduml
+
+' ─────────────────────────────────────────────────────────────
+
+@startuml UseCase_Admin
+!theme plain
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam backgroundColor #FAFAFA
+skinparam usecase {
+  BackgroundColor #EEF5FF
+  BorderColor #2C6FAC
+  ArrowColor #2C6FAC
+}
+skinparam ArrowColor #2C6FAC
+
+title Use Case — Admin
+
+actor "Admin"                      as Admin
+actor "Scheduler\n(System)"        as Scheduler
+
+rectangle "Library Study Room Reservation System" {
+
+  package "Authentication" {
+    usecase "Login"          as UC_Login
+    usecase "Refresh Token"  as UC_Refresh
+  }
+
+  package "Room Management" {
+    usecase "View All Rooms"   as UC_ViewRooms
+    usecase "Create Room"      as UC_CreateRoom
+    usecase "Update Room"      as UC_UpdateRoom
+    usecase "Delete Room"      as UC_DeleteRoom
+    usecase "Check Availability" as UC_CheckAvail
+  }
+
+  package "Reservation Management" {
+    usecase "View All Reservations"   as UC_ViewAll
+    usecase "Confirm Reservation"     as UC_Confirm
+    usecase "Decline Reservation"     as UC_Decline
+    usecase "Cancel Any Reservation"  as UC_CancelAny
+    usecase "Book Room (auto-confirm)" as UC_BookRoom
+    usecase "Book Seat (auto-confirm)" as UC_BookSeat
+  }
+
+  package "User Management" {
+    usecase "List All Users"      as UC_ListUsers
+    usecase "View User Details"   as UC_ViewUser
+    usecase "Create User"         as UC_CreateUser
+    usecase "Update User"         as UC_UpdateUser
+    usecase "Delete User"         as UC_DeleteUser
+    usecase "Grant Permission"    as UC_GrantPerm
+    usecase "Revoke Permission"   as UC_RevokePerm
+  }
+
+  package "Scheduled Jobs" {
+    usecase "Auto-complete Expired\nReservations" as UC_AutoComplete
+  }
+}
+
+Admin --> UC_Login
+Admin --> UC_Refresh
+Admin --> UC_ViewRooms
+Admin --> UC_CreateRoom
+Admin --> UC_UpdateRoom
+Admin --> UC_DeleteRoom
+Admin --> UC_CheckAvail
+Admin --> UC_ViewAll
+Admin --> UC_Confirm
+Admin --> UC_Decline
+Admin --> UC_CancelAny
+Admin --> UC_BookRoom
+Admin --> UC_BookSeat
+Admin --> UC_ListUsers
+Admin --> UC_ViewUser
+Admin --> UC_CreateUser
+Admin --> UC_UpdateUser
+Admin --> UC_DeleteUser
+Admin --> UC_GrantPerm
+Admin --> UC_RevokePerm
+
+Scheduler --> UC_AutoComplete
+
+@enduml

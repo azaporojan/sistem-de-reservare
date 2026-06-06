@@ -1,0 +1,43 @@
+@startuml State_ReservationLifecycle
+!theme plain
+skinparam backgroundColor #FAFAFA
+skinparam state {
+  BackgroundColor #EEF5FF
+  BorderColor #2C6FAC
+  ArrowColor #2C6FAC
+  FontSize 13
+}
+skinparam note {
+  BorderColor #E6800A
+  BackgroundColor #FFF5E6
+}
+
+title Reservation — State Machine Diagram
+
+[*] --> PENDING : User submits booking\n(bookRoom / bookSeat)
+
+PENDING --> CONFIRMED   : Admin confirms\n[POST /{id}/confirm]
+PENDING --> DECLINED    : Admin declines\n[POST /{id}/decline]
+PENDING --> CANCELLED   : Owner or Admin cancels\n[DELETE /{id}]\n[only if startTime > now]
+
+CONFIRMED --> COMPLETED : CompletionScheduler\n(every 30 min)\n[endDateTime < now]
+CONFIRMED --> CANCELLED : Owner or Admin cancels\n[DELETE /{id}]\n[only if startTime > now]
+
+DECLINED --> [*]  : terminal state
+CANCELLED --> [*] : terminal state
+COMPLETED --> [*] : terminal state
+
+note right of PENDING
+  Created with status PENDING by default.
+  Exception: Admin user → auto-CONFIRMED.
+end note
+
+note right of CONFIRMED
+  Cannot be cancelled if\nstartDateTime has passed.
+end note
+
+note right of COMPLETED
+  Set automatically by scheduler,\nnot by API call.
+end note
+
+@enduml

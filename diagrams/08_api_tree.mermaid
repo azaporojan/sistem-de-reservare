@@ -1,0 +1,35 @@
+---
+title: Library Study Room Reservation System — REST API Interface Tree
+---
+mindmap
+  root((API\n/api))
+    auth[/auth]
+      post_register("POST /register\n🔓 Register new user\nBody: email, password, fullName, role\nReturns: AuthResponse")
+      post_login("POST /login\n🔓 Authenticate user\nBody: email, password\nReturns: AuthResponse")
+      post_refresh("POST /refresh\n🔓 Refresh access token\nBody: refreshToken\nReturns: AuthResponse")
+    rooms[/rooms]
+      get_rooms("GET /\n🔐 ROOM_READ\nList all active rooms")
+      get_room("GET /{id}\n🔐 ROOM_READ\nGet room by ID")
+      get_avail("GET /{id}/availability\n🔐 ROOM_READ\nCheck slot availability\nBody: start, end\nReturns: available, conflicts")
+      post_room("POST /\n🔐 ROOM_WRITE (Admin)\nCreate room\nBody: name, location, capacity, description")
+      patch_room("PATCH /{id}\n🔐 ROOM_WRITE (Admin)\nUpdate room fields")
+      delete_room("DELETE /{id}\n🔐 ROOM_WRITE (Admin)\nDelete room")
+    reservations[/reservations]
+      get_all_res("GET /\n🔐 RESERVATION_READ_ALL (Admin)\nList all reservations")
+      get_my("GET /my\n🔐 RESERVATION_READ_OWN\nList my reservations")
+      get_res("GET /{id}\n🔐 Authenticated\nGet by ID (own or admin)")
+      post_book_room("POST /room\n🔐 ROOM_BOOK (Teacher/Admin)\nBook entire room\nBody: roomId, startDateTime, endDateTime, notes")
+      post_book_seat("POST /seat\n🔐 SEAT_BOOK (Student/Admin)\nBook a seat\nBody: roomId, startDateTime, endDateTime, notes")
+      post_confirm("POST /{id}/confirm\n🔐 RESERVATION_MANAGE (Admin)\nConfirm pending reservation\nBody: note")
+      post_decline("POST /{id}/decline\n🔐 RESERVATION_MANAGE (Admin)\nDecline pending reservation\nBody: note")
+      delete_res("DELETE /{id}\n🔐 Owner or RESERVATION_MANAGE\nCancel reservation")
+    users[/users]
+      get_me("GET /me\n🔐 Authenticated\nGet my profile")
+      patch_me("PATCH /me\n🔐 Authenticated\nUpdate my profile\nBody: fullName, password")
+      get_users("GET /\n🔐 USER_READ (Admin)\nList all users")
+      get_user("GET /{id}\n🔐 USER_READ (Admin)\nGet user by ID")
+      post_user("POST /\n🔐 USER_MANAGE (Admin)\nCreate user\nBody: email, password, fullName, role")
+      patch_user("PATCH /{id}\n🔐 USER_MANAGE (Admin)\nUpdate user")
+      delete_user("DELETE /{id}\n🔐 USER_MANAGE (Admin)\nDelete user")
+      post_perm("POST /{id}/permissions\n🔐 USER_MANAGE (Admin)\nGrant extra permission\nBody: permission")
+      delete_perm("DELETE /{id}/permissions\n🔐 USER_MANAGE (Admin)\nRevoke permission\nBody: permission")

@@ -1,0 +1,123 @@
+@startuml Sequence_ReservationLifecycle
+!theme plain
+skinparam backgroundColor #FAFAFA
+skinparam sequenceArrowThickness 2
+skinparam sequenceParticipantBorderColor #2C6FAC
+skinparam sequenceParticipantBackgroundColor #EEF5FF
+skinparam sequenceLifeLineBorderColor #888888
+skinparam noteBorderColor #E6800A
+skinparam noteBackgroundColor #FFF5E6
+
+title UseCase: Reservation Lifecycle — Confirm, Decline, Cancel & Auto-Complete
+
+actor       "Admin"                    as Admin
+actor       "User (Teacher/Student)"   as User
+participant "ReservationController"    as Ctrl
+participant "ReservationService"       as Svc
+participant "ReservationRepository"    as ResRepo
+participant "CompletionScheduler\n@cron 0 0/30 * * * *" as Scheduler
+
+== Admin confirms a PENDING reservation (POST /api/reservations/{id}/confirm) ==
+
+Admin -> Ctrl: POST /api/reservations/{id}/confirm\nAuthorization: Bearer <adminToken>\n{note: "Approved — enjoy the room!"}
+
+activate Ctrl
+note over Ctrl: @PreAuthorize("hasAuthority('RESERVATION_MANAGE')")
+
+Ctrl -> Svc: confirm(id, adminId, req)
+activate Svc
+
+Svc -> ResRepo: findById(id)
+ResRepo --> Svc: Reservation{status: PENDING}
+
+note over Svc: status == PENDING ✓
+
+Svc -> Svc: reservation.status = CONFIRMED\nreservation.reviewedBy = adminId\nreservation.reviewNote = "Approved…"
+
+Svc -> ResRepo: save(reservation)
+ResRepo --> Svc: Reservation{status: CONFIRMED}
+
+Svc --> Ctrl: ReservationResponse{status: CONFIRMED}
+deactivate Svc
+
+Ctrl --> Admin: 200 OK\n{id, status:"CONFIRMED", reviewedBy:adminId, reviewNote:"Approved…"}
+deactivate Ctrl
+
+== Admin declines a PENDING reservation (POST /api/reservations/{id}/decline) ==
+
+Admin -> Ctrl: POST /api/reservations/{id}/decline\nAuthorization: Bearer <adminToken>\n{note: "Room not available — maintenance"}
+
+activate Ctrl
+Ctrl -> Svc: decline(id, adminId, req)
+activate Svc
+
+Svc -> ResRepo: findById(id)
+ResRepo --> Svc: Reservation{status: PENDING}
+
+Svc -> Svc: reservation.status = DECLINED\nreservation.reviewedBy = adminId\nreservation.reviewNote = "Room not available…"
+
+Svc -> ResRepo: save(reservation)
+ResRepo --> Svc: Reservation{status: DECLINED}
+
+Svc --> Ctrl: ReservationResponse{status: DECLINED}
+deactivate Svc
+
+Ctrl --> Admin: 200 OK\n{status:"DECLINED", …}
+deactivate Ctrl
+
+== User cancels own CONFIRMED reservation (DELETE /api/reservations/{id}) ==
+note over User: Reservation starts in the future
+
+User -> Ctrl: DELETE /api/reservations/{id}\nAuthorization: Bearer <userToken>
+
+activate Ctrl
+Ctrl -> Svc: cancel(id, auth)
+activate Svc
+
+Svc -> ResRepo: findById(id)
+ResRepo --> Svc: Reservation{userId=X, status:CONFIRMED, startDateTime: future}
+
+note over Svc: callerId == reservation.userId ✓\nstatus ∈ [PENDING, CONFIRMED] ✓\nstartDateTime > now ✓
+
+Svc -> Svc: reservation.status = CANCELLED
+
+Svc -> ResRepo: save(reservation)
+ResRepo --> Svc: Reservation{status: CANCELLED}
+
+Svc --> Ctrl: ReservationResponse{status: CANCELLED}
+deactivate Svc
+
+Ctrl --> User: 200 OK\n{status:"CANCELLED", …}
+deactivate Ctrl
+
+== Attempt to cancel already-started reservation (error flow) ==
+
+User -> Ctrl: DELETE /api/reservations/{id}\n(startDateTime is in the past)
+activate Ctrl
+Ctrl -> Svc: cancel(id, auth)
+activate Svc
+Svc -> ResRepo: findById(id)
+ResRepo --> Svc: Reservation{startDateTime: past}
+note over Svc: startDateTime.isBefore(now) → ERROR
+Svc --> Ctrl: throw BadRequestException\n("Cannot cancel a reservation that has already started")
+deactivate Svc
+Ctrl --> User: 400 Bad Request\n{"error":"Cannot cancel a reservation that has already started"}
+deactivate Ctrl
+
+== Scheduled auto-completion (every 30 minutes) ==
+
+note over Scheduler: Spring @Scheduled\ncron: "0 0/30 * * * *"
+
+Scheduler -> ResRepo: findConfirmedPastEnd(now)\n(status=CONFIRMED AND end_date_time < now)
+ResRepo --> Scheduler: [Reservation1{id,…}, Reservation2{id,…}]
+
+loop for each expired reservation
+    Scheduler -> Scheduler: reservation.status = COMPLETED
+end
+
+Scheduler -> ResRepo: saveAll(expiredReservations)
+ResRepo --> Scheduler: ok
+
+note over Scheduler: Logs: "Completed 2 reservation(s) past their end time"
+
+@enduml

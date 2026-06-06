@@ -1,0 +1,91 @@
+---
+title: Library Study Room Reservation System — ER Diagram (PostgreSQL)
+---
+erDiagram
+
+    users {
+        UUID        id          PK  "gen_random_uuid()"
+        VARCHAR255  email       UK  "NOT NULL"
+        VARCHAR255  password        "bcrypt hash"
+        VARCHAR255  full_name       "NOT NULL"
+        BOOLEAN     enabled         "DEFAULT TRUE"
+        TIMESTAMPTZ created_at      "DEFAULT NOW()"
+        TIMESTAMPTZ updated_at      "DEFAULT NOW()"
+    }
+
+    roles {
+        BIGSERIAL   id          PK
+        VARCHAR50   name        UK  "ADMIN | TEACHER | STUDENT"
+    }
+
+    user_roles {
+        BIGSERIAL   id          PK
+        UUID        user_id     FK  "→ users.id ON DELETE CASCADE"
+        BIGINT      role_id     FK  "→ roles.id"
+    }
+
+    permissions {
+        BIGSERIAL   id          PK
+        VARCHAR100  name        UK  "e.g. ROOM_READ, SEAT_BOOK …"
+        TEXT        description
+    }
+
+    role_permissions {
+        BIGSERIAL   id              PK
+        BIGINT      role_id         FK  "→ roles.id ON DELETE CASCADE"
+        BIGINT      permission_id   FK  "→ permissions.id ON DELETE CASCADE"
+    }
+
+    user_permissions {
+        BIGSERIAL   id              PK
+        UUID        user_id         FK  "→ users.id ON DELETE CASCADE"
+        BIGINT      permission_id   FK  "→ permissions.id ON DELETE CASCADE"
+    }
+
+    study_rooms {
+        BIGSERIAL   id          PK
+        VARCHAR255  name        UK  "NOT NULL"
+        VARCHAR255  location        "NOT NULL"
+        INT         capacity        "CHECK > 0"
+        TEXT        description
+        BOOLEAN     active          "DEFAULT TRUE"
+        TIMESTAMPTZ created_at      "DEFAULT NOW()"
+        TIMESTAMPTZ updated_at      "DEFAULT NOW()"
+    }
+
+    reservations {
+        UUID        id              PK  "gen_random_uuid()"
+        UUID        user_id         FK  "→ users.id"
+        BIGINT      room_id         FK  "→ study_rooms.id"
+        VARCHAR10   type                "ROOM | SEAT"
+        TIMESTAMP   start_date_time     "NOT NULL"
+        TIMESTAMP   end_date_time       "NOT NULL"
+        INT         seats_requested     "CHECK > 0"
+        VARCHAR20   status              "PENDING|CONFIRMED|COMPLETED|DECLINED|CANCELLED"
+        TEXT        notes
+        UUID        reviewed_by     FK  "→ users.id (nullable)"
+        TEXT        review_note
+        TIMESTAMPTZ created_at          "DEFAULT NOW()"
+        TIMESTAMPTZ updated_at          "DEFAULT NOW()"
+    }
+
+    refresh_tokens {
+        BIGSERIAL   id          PK
+        VARCHAR512  token       UK  "NOT NULL"
+        UUID        user_id     FK  "→ users.id ON DELETE CASCADE"
+        TIMESTAMPTZ expires_at      "NOT NULL"
+        BOOLEAN     revoked         "DEFAULT FALSE"
+        TIMESTAMPTZ created_at      "DEFAULT NOW()"
+    }
+
+    %% Relationships
+    users           ||--o{ user_roles         : "has one"
+    roles           ||--o{ user_roles         : "assigned to"
+    roles           ||--o{ role_permissions   : "has many"
+    permissions     ||--o{ role_permissions   : "in many"
+    users           ||--o{ user_permissions   : "extra grants"
+    permissions     ||--o{ user_permissions   : "granted to"
+    users           ||--o{ reservations       : "creates"
+    users           ||--o{ reservations       : "reviews (reviewed_by)"
+    study_rooms     ||--o{ reservations       : "booked by"
+    users           ||--o{ refresh_tokens     : "owns"

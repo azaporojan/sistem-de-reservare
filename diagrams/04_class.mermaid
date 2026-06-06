@@ -1,0 +1,324 @@
+---
+title: Library Study Room Reservation System — Class Diagram
+---
+classDiagram
+
+    %% ── Enums ────────────────────────────────────────────────
+    class RoleName {
+        <<enumeration>>
+        ADMIN
+        TEACHER
+        STUDENT
+    }
+
+    class PermissionName {
+        <<enumeration>>
+        ALL
+        ROOM_READ
+        ROOM_WRITE
+        ROOM_BOOK
+        SEAT_BOOK
+        RESERVATION_READ_OWN
+        RESERVATION_READ_ALL
+        RESERVATION_CANCEL_OWN
+        RESERVATION_MANAGE
+        USER_READ
+        USER_MANAGE
+    }
+
+    class ReservationType {
+        <<enumeration>>
+        ROOM
+        SEAT
+    }
+
+    class ReservationStatus {
+        <<enumeration>>
+        PENDING
+        CONFIRMED
+        COMPLETED
+        DECLINED
+        CANCELLED
+    }
+
+    %% ── JPA Entities ─────────────────────────────────────────
+    class User {
+        <<entity>>
+        +UUID id
+        +String email
+        +String password
+        +String fullName
+        +Boolean enabled
+        +Instant createdAt
+        +Instant updatedAt
+    }
+
+    class Role {
+        <<entity>>
+        +Long id
+        +RoleName name
+    }
+
+    class UserRole {
+        <<entity>>
+        +Long id
+        +UUID userId
+        +Role role
+    }
+
+    class Permission {
+        <<entity>>
+        +Long id
+        +PermissionName name
+        +String description
+    }
+
+    class RolePermission {
+        <<entity>>
+        +Long id
+        +Long roleId
+        +Permission permission
+    }
+
+    class UserPermission {
+        <<entity>>
+        +Long id
+        +UUID userId
+        +Permission permission
+    }
+
+    class StudyRoom {
+        <<entity>>
+        +Long id
+        +String name
+        +String location
+        +Int capacity
+        +String description
+        +Boolean active
+        +Instant createdAt
+        +Instant updatedAt
+    }
+
+    class Reservation {
+        <<entity>>
+        +UUID id
+        +UUID userId
+        +StudyRoom room
+        +ReservationType type
+        +LocalDateTime startDateTime
+        +LocalDateTime endDateTime
+        +Int seatsRequested
+        +ReservationStatus status
+        +String notes
+        +UUID reviewedBy
+        +String reviewNote
+        +Instant createdAt
+        +Instant updatedAt
+    }
+
+    class RefreshToken {
+        <<entity>>
+        +Long id
+        +String token
+        +UUID userId
+        +Instant expiresAt
+        +Boolean revoked
+        +Instant createdAt
+    }
+
+    %% ── DTOs ─────────────────────────────────────────────────
+    class RegisterRequest {
+        <<dto>>
+        +String email
+        +String password
+        +String fullName
+        +String role
+    }
+    class LoginRequest {
+        <<dto>>
+        +String email
+        +String password
+    }
+    class AuthResponse {
+        <<dto>>
+        +String accessToken
+        +String refreshToken
+        +String tokenType
+    }
+    class BookRoomRequest {
+        <<dto>>
+        +Long roomId
+        +LocalDateTime startDateTime
+        +LocalDateTime endDateTime
+        +String notes
+    }
+    class BookSeatRequest {
+        <<dto>>
+        +Long roomId
+        +LocalDateTime startDateTime
+        +LocalDateTime endDateTime
+        +String notes
+    }
+    class ReservationResponse {
+        <<dto>>
+        +UUID id
+        +UUID userId
+        +Long roomId
+        +String roomName
+        +ReservationType type
+        +LocalDateTime startDateTime
+        +LocalDateTime endDateTime
+        +Int seatsRequested
+        +ReservationStatus status
+        +String notes
+        +UUID reviewedBy
+        +String reviewNote
+        +Instant createdAt
+    }
+    class RoomResponse {
+        <<dto>>
+        +Long id
+        +String name
+        +String location
+        +Int capacity
+        +String description
+        +Boolean active
+    }
+
+    %% ── Services ─────────────────────────────────────────────
+    class AuthService {
+        <<service>>
+        -refreshTokenTtlDays Long
+        +register(req RegisterRequest) AuthResponse
+        +login(req LoginRequest) AuthResponse
+        +refresh(req RefreshRequest) AuthResponse
+        -issueTokens(user, role) AuthResponse
+        -effectivePermissions(userId, role) List~String~
+    }
+
+    class RoomService {
+        <<service>>
+        +getAll() List~RoomResponse~
+        +getById(id) RoomResponse
+        +create(req) RoomResponse
+        +update(id, req) RoomResponse
+        +delete(id)
+        +availability(id, req) AvailabilityResponse
+    }
+
+    class ReservationService {
+        <<service>>
+        +getAll() List~ReservationResponse~
+        +getMy(userId) List~ReservationResponse~
+        +getById(id, auth) ReservationResponse
+        +bookRoom(userId, req, isAdmin) ReservationResponse
+        +bookSeat(userId, req, isAdmin) ReservationResponse
+        +confirm(id, reviewerId, req) ReservationResponse
+        +decline(id, reviewerId, req) ReservationResponse
+        +cancel(id, auth) ReservationResponse
+    }
+
+    class UserService {
+        <<service>>
+        +getAll() List~UserResponse~
+        +getById(id) UserResponse
+        +getMe(userId) UserResponse
+        +updateMe(userId, req) UserResponse
+        +createUser(req) UserResponse
+        +updateUser(id, req) UserResponse
+        +deleteUser(id)
+        +grantPermission(userId, req)
+        +revokePermission(userId, req)
+    }
+
+    class BookingRulesValidator {
+        <<component>>
+        +validateSlot(start, end)
+        +validateRoomBooking(userId, room, start, end)
+        +validateSeatBooking(userId, room, start, end)
+        -checkNoConflict(roomId, start, end)
+    }
+
+    class JwtService {
+        <<service>>
+        -signingKey SecretKey
+        +generateToken(userId, email, fullName, role, permissions) String
+        +extractUserId(token) String
+        +extractPermissions(token) List~String~
+        +isTokenValid(token) Boolean
+        -claims(token) Claims
+    }
+
+    class CompletionScheduler {
+        <<component>>
+        +completeExpiredReservations()
+    }
+
+    %% ── Controllers ──────────────────────────────────────────
+    class AuthController {
+        <<controller>>
+        +register(req) AuthResponse
+        +login(req) AuthResponse
+        +refresh(req) AuthResponse
+    }
+
+    class RoomController {
+        <<controller>>
+        +listRooms() List~RoomResponse~
+        +getRoom(id) RoomResponse
+        +availability(id, req) AvailabilityResponse
+        +createRoom(req) RoomResponse
+        +updateRoom(id, req) RoomResponse
+        +deleteRoom(id)
+    }
+
+    class ReservationController {
+        <<controller>>
+        +listAll() List~ReservationResponse~
+        +listMy(auth) List~ReservationResponse~
+        +getById(id, auth) ReservationResponse
+        +bookRoom(req, auth) ReservationResponse
+        +bookSeat(req, auth) ReservationResponse
+        +confirm(id, req, auth) ReservationResponse
+        +decline(id, req, auth) ReservationResponse
+        +cancel(id, auth) ReservationResponse
+    }
+
+    class UserController {
+        <<controller>>
+        +getMe(auth) UserResponse
+        +updateMe(auth, req) UserResponse
+        +listUsers() List~UserResponse~
+        +getUser(id) UserResponse
+        +createUser(req) UserResponse
+        +updateUser(id, req) UserResponse
+        +deleteUser(id)
+        +grantPermission(id, req)
+        +revokePermission(id, req)
+    }
+
+    %% ── Relationships ─────────────────────────────────────────
+    AuthController --> AuthService
+    RoomController --> RoomService
+    ReservationController --> ReservationService
+    UserController --> UserService
+
+    AuthService --> JwtService
+    AuthService --> RefreshToken
+    ReservationService --> BookingRulesValidator
+    CompletionScheduler --> Reservation
+
+    User "1" -- "0..1" UserRole : has
+    UserRole --> Role
+    Role "1" -- "*" RolePermission : grants
+    RolePermission --> Permission
+    User "1" -- "*" UserPermission : extra
+    UserPermission --> Permission
+    User "1" -- "*" Reservation : creates
+    StudyRoom "1" -- "*" Reservation : booked by
+    User "1" -- "*" RefreshToken : owns
+
+    Role --> RoleName
+    Permission --> PermissionName
+    Reservation --> ReservationType
+    Reservation --> ReservationStatus
