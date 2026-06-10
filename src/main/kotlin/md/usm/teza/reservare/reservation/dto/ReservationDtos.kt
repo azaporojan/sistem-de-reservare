@@ -15,6 +15,7 @@ data class BookRoomRequest(
 
 data class BookSeatRequest(
     val roomId: Long,
+    val seatId: Long,
     val startDateTime: LocalDateTime,
     val endDateTime: LocalDateTime,
     val notes: String? = null,
@@ -29,6 +30,8 @@ data class ReservationResponse(
     val userId: UUID,
     val roomId: Long,
     val roomName: String,
+    val seatId: Long?,
+    val seatLabel: String?,
     val type: ReservationType,
     val startDateTime: LocalDateTime,
     val endDateTime: LocalDateTime,

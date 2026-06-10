@@ -35,6 +35,71 @@ interface ReservationRepository : JpaRepository<Reservation, UUID> {
         @Param("activeStatuses") activeStatuses: Collection<ReservationStatus>,
     ): List<Reservation>
 
+    /**
+     * Find reservations that conflict with booking a specific seat in [start, end):
+     * any full ROOM reservation of the room, or a SEAT reservation on the same seat.
+     */
+    @Query("""
+        SELECT r FROM Reservation r
+        WHERE r.room.id = :roomId
+          AND r.status IN :activeStatuses
+          AND r.startDateTime < :end
+          AND r.endDateTime > :start
+          AND (r.type = md.usm.teza.reservare.reservation.ReservationType.ROOM
+               OR (r.seat IS NOT NULL AND r.seat.id = :seatId))
+    """)
+    fun findSeatConflicting(
+        @Param("roomId") roomId: Long,
+        @Param("seatId") seatId: Long,
+        @Param("start") start: LocalDateTime,
+        @Param("end") end: LocalDateTime,
+        @Param("activeStatuses") activeStatuses: Collection<ReservationStatus>,
+    ): List<Reservation>
+
+    /** IDs of seats with an active SEAT reservation overlapping [start, end) in the room. */
+    @Query("""
+        SELECT DISTINCT r.seat.id FROM Reservation r
+        WHERE r.room.id = :roomId
+          AND r.seat IS NOT NULL
+          AND r.status IN :activeStatuses
+          AND r.startDateTime < :end
+          AND r.endDateTime > :start
+    """)
+    fun findBookedSeatIds(
+        @Param("roomId") roomId: Long,
+        @Param("start") start: LocalDateTime,
+        @Param("end") end: LocalDateTime,
+        @Param("activeStatuses") activeStatuses: Collection<ReservationStatus>,
+    ): List<Long>
+
+    /** True if any active full-ROOM reservation overlaps [start, end) for the room. */
+    @Query("""
+        SELECT COUNT(r) > 0 FROM Reservation r
+        WHERE r.room.id = :roomId
+          AND r.type = md.usm.teza.reservare.reservation.ReservationType.ROOM
+          AND r.status IN :activeStatuses
+          AND r.startDateTime < :end
+          AND r.endDateTime > :start
+    """)
+    fun existsRoomConflict(
+        @Param("roomId") roomId: Long,
+        @Param("start") start: LocalDateTime,
+        @Param("end") end: LocalDateTime,
+        @Param("activeStatuses") activeStatuses: Collection<ReservationStatus>,
+    ): Boolean
+
+    /** True if any active reservation references a seat of this room (used before regenerating seats). */
+    @Query("""
+        SELECT COUNT(r) > 0 FROM Reservation r
+        WHERE r.room.id = :roomId
+          AND r.seat IS NOT NULL
+          AND r.status IN :activeStatuses
+    """)
+    fun existsActiveSeatReservations(
+        @Param("roomId") roomId: Long,
+        @Param("activeStatuses") activeStatuses: Collection<ReservationStatus>,
+    ): Boolean
+
     /** Find CONFIRMED reservations whose endDateTime is in the past (for scheduler). */
     @Query("""
         SELECT r FROM Reservation r

@@ -5,6 +5,7 @@ import md.usm.teza.reservare.common.exception.ForbiddenException
 import md.usm.teza.reservare.common.exception.NotFoundException
 import md.usm.teza.reservare.reservation.dto.*
 import md.usm.teza.reservare.room.RoomRepository
+import md.usm.teza.reservare.room.SeatRepository
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -15,6 +16,7 @@ import java.util.UUID
 class ReservationService(
     private val reservationRepo: ReservationRepository,
     private val roomRepo: RoomRepository,
+    private val seatRepo: SeatRepository,
     private val validator: BookingRulesValidator,
 ) {
 
@@ -60,7 +62,10 @@ class ReservationService(
         val room = roomRepo.findById(req.roomId).orElseThrow { NotFoundException("Room not found: ${req.roomId}") }
         if (!room.active) throw BadRequestException("Room is not active")
 
-        validator.validateSeatBooking(userId, room, req.startDateTime, req.endDateTime)
+        val seat = seatRepo.findById(req.seatId).orElseThrow { NotFoundException("Seat not found: ${req.seatId}") }
+        if (seat.room.id != room.id) throw BadRequestException("Seat ${req.seatId} does not belong to room ${req.roomId}")
+
+        validator.validateSeatBooking(userId, room, seat, req.startDateTime, req.endDateTime)
 
         val status = if (isAdmin) ReservationStatus.CONFIRMED else ReservationStatus.PENDING
 
@@ -68,6 +73,7 @@ class ReservationService(
             Reservation(
                 userId = userId,
                 room = room,
+                seat = seat,
                 type = ReservationType.SEAT,
                 startDateTime = req.startDateTime,
                 endDateTime = req.endDateTime,
@@ -127,6 +133,8 @@ class ReservationService(
         userId = userId,
         roomId = room.id,
         roomName = room.name,
+        seatId = seat?.id,
+        seatLabel = seat?.label,
         type = type,
         startDateTime = startDateTime,
         endDateTime = endDateTime,

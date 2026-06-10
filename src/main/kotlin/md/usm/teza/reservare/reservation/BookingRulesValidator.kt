@@ -2,6 +2,7 @@ package md.usm.teza.reservare.reservation
 
 import md.usm.teza.reservare.common.exception.BadRequestException
 import md.usm.teza.reservare.common.exception.ConflictException
+import md.usm.teza.reservare.room.Seat
 import md.usm.teza.reservare.room.StudyRoom
 import md.usm.teza.reservare.user.RoleName
 import md.usm.teza.reservare.user.UserRoleRepository
@@ -53,7 +54,7 @@ class BookingRulesValidator(
         checkNoConflict(room.id, start, end)
     }
 
-    fun validateSeatBooking(userId: UUID, room: StudyRoom, start: LocalDateTime, end: LocalDateTime) {
+    fun validateSeatBooking(userId: UUID, room: StudyRoom, seat: Seat, start: LocalDateTime, end: LocalDateTime) {
         validateSlot(start, end)
 
         val role = userRoleRepo.findByUserId(userId)?.role?.name
@@ -68,8 +69,9 @@ class BookingRulesValidator(
             if (activeCount >= 1) throw BadRequestException("Students can have at most 1 active seat reservation")
         }
 
-        // Check for room-level conflicts (if a full ROOM booking exists, seats can't be booked)
-        checkNoConflict(room.id, start, end)
+        // Conflict if the whole room is booked, or this specific seat is already taken
+        val conflicts = reservationRepo.findSeatConflicting(room.id, seat.id, start, end, activeStatuses)
+        if (conflicts.isNotEmpty()) throw ConflictException("Seat ${seat.label} is not available for the requested time slot")
     }
 
     private fun checkNoConflict(roomId: Long, start: LocalDateTime, end: LocalDateTime) {

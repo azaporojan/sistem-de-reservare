@@ -41,3 +41,21 @@ data class SlotDto(
     val start: LocalDateTime,
     val end: LocalDateTime,
 )
+
+data class SeatMapResponse(
+    val roomId: Long,
+    val roomName: String,
+    val rows: Int,
+    val cols: Int,
+    /** True when a full-room reservation covers the requested window (all seats unavailable). */
+    val roomBooked: Boolean,
+    val seats: List<SeatStatusDto>,
+)
+
+data class SeatStatusDto(
+    val id: Long,
+    val label: String,
+    val row: Int,
+    val col: Int,
+    val booked: Boolean,
+)

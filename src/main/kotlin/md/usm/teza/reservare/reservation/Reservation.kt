@@ -1,6 +1,7 @@
 package md.usm.teza.reservare.reservation
 
 import jakarta.persistence.*
+import md.usm.teza.reservare.room.Seat
 import md.usm.teza.reservare.room.StudyRoom
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
@@ -24,6 +25,11 @@ class Reservation(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false)
     val room: StudyRoom,
+
+    /** The concrete seat for SEAT reservations; null for ROOM reservations. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seat_id")
+    val seat: Seat? = null,
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

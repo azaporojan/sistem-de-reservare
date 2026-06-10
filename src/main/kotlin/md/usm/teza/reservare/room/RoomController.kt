@@ -1,7 +1,9 @@
 package md.usm.teza.reservare.room
 
 import md.usm.teza.reservare.room.dto.*
+import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
+import java.time.LocalDateTime
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 
@@ -21,6 +23,14 @@ class RoomController(private val roomService: RoomService) {
     @PreAuthorize("hasAuthority('ROOM_READ') or hasAuthority('ALL')")
     fun availability(@PathVariable id: Long, @RequestBody req: AvailabilityRequest): AvailabilityResponse =
         roomService.availability(id, req)
+
+    @GetMapping("/{id}/seats")
+    @PreAuthorize("hasAuthority('ROOM_READ') or hasAuthority('ALL')")
+    fun seatMap(
+        @PathVariable id: Long,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) start: LocalDateTime?,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) end: LocalDateTime?,
+    ): SeatMapResponse = roomService.seatMap(id, start, end)
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
