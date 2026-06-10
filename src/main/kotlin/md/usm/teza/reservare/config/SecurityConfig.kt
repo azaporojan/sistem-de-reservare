@@ -36,6 +36,16 @@ class SecurityConfig(
                         "/v3/api-docs",
                         "/v3/api-docs.yaml",
                         "/v3/api-docs/**",
+                        // SPA static assets + client-side routes (API stays protected)
+                        "/",
+                        "/index.html",
+                        "/assets/**",
+                        "/favicon.ico",
+                        "/login",
+                        "/my",
+                        "/requests",
+                        "/rooms",
+                        "/rooms/**",
                     ).permitAll()
                     .anyRequest().authenticated()
             }

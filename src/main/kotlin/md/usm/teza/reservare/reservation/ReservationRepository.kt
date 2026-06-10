@@ -56,6 +56,25 @@ interface ReservationRepository : JpaRepository<Reservation, UUID> {
         @Param("activeStatuses") activeStatuses: Collection<ReservationStatus>,
     ): List<Reservation>
 
+    /**
+     * Active reservations overlapping [start, end) in the room, with the booker's full name.
+     * Includes both SEAT and ROOM reservations. Tuple: (reservation, fullName).
+     */
+    @Query("""
+        SELECT r, u.fullName FROM Reservation r, md.usm.teza.reservare.user.User u
+        WHERE u.id = r.userId
+          AND r.room.id = :roomId
+          AND r.status IN :activeStatuses
+          AND r.startDateTime < :end
+          AND r.endDateTime > :start
+    """)
+    fun findOccupancyWithBooker(
+        @Param("roomId") roomId: Long,
+        @Param("start") start: LocalDateTime,
+        @Param("end") end: LocalDateTime,
+        @Param("activeStatuses") activeStatuses: Collection<ReservationStatus>,
+    ): List<Array<Any>>
+
     /** IDs of seats with an active SEAT reservation overlapping [start, end) in the room. */
     @Query("""
         SELECT DISTINCT r.seat.id FROM Reservation r

@@ -752,6 +752,8 @@ components:
           format: int32
         roomBooked:
           type: boolean
+        roomBookedBy:
+          type: string
         seats:
           type: array
           items:
@@ -772,6 +774,17 @@ components:
           format: int32
         booked:
           type: boolean
+        status:
+          type: string
+          enum:
+            - FREE
+            - PENDING
+            - CONFIRMED
+        bookedBy:
+          type: string
+        reservationId:
+          type: string
+          format: uuid
     AvailabilityRequest:
       type: object
       properties:

@@ -49,8 +49,12 @@ data class SeatMapResponse(
     val cols: Int,
     /** True when a full-room reservation covers the requested window (all seats unavailable). */
     val roomBooked: Boolean,
+    /** Full name of the user holding the full-room reservation, if any. */
+    val roomBookedBy: String?,
     val seats: List<SeatStatusDto>,
 )
+
+enum class SeatOccupancyStatus { FREE, PENDING, CONFIRMED }
 
 data class SeatStatusDto(
     val id: Long,
@@ -58,4 +62,8 @@ data class SeatStatusDto(
     val row: Int,
     val col: Int,
     val booked: Boolean,
+    val status: SeatOccupancyStatus,
+    /** Full name of the booker (null when free). */
+    val bookedBy: String?,
+    val reservationId: java.util.UUID?,
 )

@@ -88,6 +88,7 @@ class RoomService(
         )
     }
 
+    @Transactional(readOnly = true)
     fun seatMap(id: Long, start: LocalDateTime?, end: LocalDateTime?): SeatMapResponse {
         val room = roomRepo.findById(id).orElseThrow { NotFoundException("Room not found: $id") }
 
@@ -97,22 +98,37 @@ class RoomService(
         if (!to.isAfter(from)) throw BadRequestException("end must be after start")
 
         val seats = seatRepo.findByRoomIdOrderByRowNoAscColNoAsc(id)
-        val roomBooked = reservationRepo.existsRoomConflict(id, from, to, activeStatuses)
-        val bookedSeatIds = reservationRepo.findBookedSeatIds(id, from, to, activeStatuses).toSet()
+
+        val occupancy = reservationRepo.findOccupancyWithBooker(id, from, to, activeStatuses)
+            .map { it[0] as md.usm.teza.reservare.reservation.Reservation to it[1] as String }
+
+        val roomReservation = occupancy.firstOrNull { (r, _) -> r.seat == null }
+        val bySeatId = occupancy
+            .filter { (r, _) -> r.seat != null }
+            .associateBy { (r, _) -> r.seat!!.id }
 
         return SeatMapResponse(
             roomId = room.id,
             roomName = room.name,
             rows = seats.maxOfOrNull { it.rowNo } ?: 0,
             cols = seats.maxOfOrNull { it.colNo } ?: 0,
-            roomBooked = roomBooked,
-            seats = seats.map {
+            roomBooked = roomReservation != null,
+            roomBookedBy = roomReservation?.second,
+            seats = seats.map { seat ->
+                val hit = roomReservation ?: bySeatId[seat.id]
                 SeatStatusDto(
-                    id = it.id,
-                    label = it.label,
-                    row = it.rowNo,
-                    col = it.colNo,
-                    booked = roomBooked || it.id in bookedSeatIds,
+                    id = seat.id,
+                    label = seat.label,
+                    row = seat.rowNo,
+                    col = seat.colNo,
+                    booked = hit != null,
+                    status = when (hit?.first?.status) {
+                        null -> SeatOccupancyStatus.FREE
+                        ReservationStatus.CONFIRMED -> SeatOccupancyStatus.CONFIRMED
+                        else -> SeatOccupancyStatus.PENDING
+                    },
+                    bookedBy = hit?.second,
+                    reservationId = hit?.first?.id,
                 )
             },
         )
