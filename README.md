@@ -8,6 +8,8 @@ A Spring Boot REST API for reserving library study rooms and seats. Built with K
 - [Domain Models](docs/models.md) — entity definitions, field types, and relationships
 - [API Reference](docs/api.md) — all endpoints with access levels and examples
 - [Configuration](docs/configuration.md) — application properties and environment variables
+- [Test Users](docs/test-users.md) — seeded MVP accounts and a suggested test flow
+- [UI Requirements](docs/UI_REQUIREMENTS.md) — frontend architecture, flows, and progress
 
 ## Tech Stack
 
@@ -50,12 +52,14 @@ src/main/kotlin/md/usm/teza/reservare/
 └── common/         # GlobalExceptionHandler, ErrorResponse, custom exceptions
 ```
 
-## Default Admin Account
+## Seeded Accounts
 
-Seeded by `V1__init.sql`:
+All test accounts (MVP only) are documented in [docs/test-users.md](docs/test-users.md):
 
-| Field | Value |
-|---|---|
-| Email | `admin@library.local` |
-| Password | `Admin1234!` |
-| Role | `ADMIN` |
+| Email | Password | Role |
+|---|---|---|
+| `admin@library.local` | `Admin1234!` | ADMIN (V1) |
+| `admin2@library.local` | `Admin1234!` | ADMIN |
+| `teacher@library.local` | `Teacher1234!` | TEACHER |
+| `student1@library.local` | `Student1234!` | STUDENT |
+| `student2@library.local` | `Student1234!` | STUDENT |
